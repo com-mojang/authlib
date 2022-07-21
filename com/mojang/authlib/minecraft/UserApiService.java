@@ -1,5 +1,7 @@
 package com.mojang.authlib.minecraft;
 
+import com.mojang.authlib.minecraft.report.AbuseReportLimits;
+import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
 import java.util.Set;
 import java.util.UUID;
@@ -35,6 +37,20 @@ public interface UserApiService {
       public KeyPairResponse getKeyPair() {
          return null;
       }
+
+      @Override
+      public void reportAbuse(AbuseReportRequest request) {
+      }
+
+      @Override
+      public boolean canSendReports() {
+         return false;
+      }
+
+      @Override
+      public AbuseReportLimits getAbuseReportLimits() {
+         return AbuseReportLimits.DEFAULTS;
+      }
    };
 
    UserApiService.UserProperties properties();
@@ -47,6 +63,12 @@ public interface UserApiService {
 
    @Nullable
    KeyPairResponse getKeyPair();
+
+   void reportAbuse(AbuseReportRequest var1);
+
+   boolean canSendReports();
+
+   AbuseReportLimits getAbuseReportLimits();
 
    public static enum UserFlag {
       SERVERS_ALLOWED,
