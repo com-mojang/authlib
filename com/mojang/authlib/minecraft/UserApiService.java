@@ -3,6 +3,7 @@ package com.mojang.authlib.minecraft;
 import com.mojang.authlib.minecraft.report.AbuseReportLimits;
 import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -10,7 +11,7 @@ import javax.annotation.Nullable;
 
 public interface UserApiService {
    UserApiService.UserProperties OFFLINE_PROPERTIES = new UserApiService.UserProperties(
-      Set.of(UserApiService.UserFlag.CHAT_ALLOWED, UserApiService.UserFlag.REALMS_ALLOWED, UserApiService.UserFlag.SERVERS_ALLOWED)
+      Set.of(UserApiService.UserFlag.CHAT_ALLOWED, UserApiService.UserFlag.REALMS_ALLOWED, UserApiService.UserFlag.SERVERS_ALLOWED), Map.of()
    );
    UserApiService OFFLINE = new UserApiService() {
       @Override
@@ -78,7 +79,7 @@ public interface UserApiService {
       PROFANITY_FILTER_ENABLED;
    }
 
-   public static record UserProperties(Set<UserApiService.UserFlag> flags) {
+   public static record UserProperties(Set<UserApiService.UserFlag> flags, Map<String, BanDetails> bannedScopes) {
       public boolean flag(UserApiService.UserFlag flag) {
          return this.flags.contains(flag);
       }

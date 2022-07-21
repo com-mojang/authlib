@@ -7,6 +7,7 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.exceptions.MinecraftClientHttpException;
+import com.mojang.authlib.minecraft.BanDetails;
 import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
@@ -19,6 +20,8 @@ import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 import java.net.Proxy;
 import java.net.URL;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -129,11 +132,18 @@ public class YggdrasilUserApiService implements UserApiService {
             flags.add(UserApiService.UserFlag.PROFANITY_FILTER_ENABLED);
          }
 
-         this.properties = new UserApiService.UserProperties(flags.build());
-      } catch (MinecraftClientHttpException var5) {
-         throw var5.toAuthenticationException();
-      } catch (MinecraftClientException var6) {
+         Map<String, BanDetails> bannedScopes = new HashMap();
+         if (response.getBanStatus() != null) {
+            response.getBanStatus()
+               .getBannedScopes()
+               .forEach((scopeType, scope) -> bannedScopes.put(scopeType, new BanDetails(scope.getBanId(), scope.getExpires(), scope.getReason())));
+         }
+
+         this.properties = new UserApiService.UserProperties(flags.build(), bannedScopes);
+      } catch (MinecraftClientHttpException var6) {
          throw var6.toAuthenticationException();
+      } catch (MinecraftClientException var7) {
+         throw var7.toAuthenticationException();
       }
    }
 

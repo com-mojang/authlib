@@ -1,5 +1,8 @@
 package com.mojang.authlib.yggdrasil.response;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 public class UserAttributesResponse extends Response {
@@ -7,6 +10,8 @@ public class UserAttributesResponse extends Response {
    private UserAttributesResponse.Privileges privileges;
    @Nullable
    private UserAttributesResponse.ProfanityFilterPreferences profanityFilterPreferences;
+   @Nullable
+   private UserAttributesResponse.BanStatus banStatus;
 
    @Nullable
    public UserAttributesResponse.Privileges getPrivileges() {
@@ -16,6 +21,39 @@ public class UserAttributesResponse extends Response {
    @Nullable
    public UserAttributesResponse.ProfanityFilterPreferences getProfanityFilterPreferences() {
       return this.profanityFilterPreferences;
+   }
+
+   @Nullable
+   public UserAttributesResponse.BanStatus getBanStatus() {
+      return this.banStatus;
+   }
+
+   public static class BanStatus {
+      private Map<String, UserAttributesResponse.BanStatus.BannedScope> bannedScopes;
+
+      public Map<String, UserAttributesResponse.BanStatus.BannedScope> getBannedScopes() {
+         return this.bannedScopes;
+      }
+
+      public static class BannedScope {
+         private UUID banId;
+         @Nullable
+         private Instant expires;
+         private String reason;
+
+         public UUID getBanId() {
+            return this.banId;
+         }
+
+         @Nullable
+         public Instant getExpires() {
+            return this.expires;
+         }
+
+         public String getReason() {
+            return this.reason;
+         }
+      }
    }
 
    public static class Privileges {
