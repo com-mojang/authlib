@@ -10,7 +10,7 @@ public enum YggdrasilEnvironment {
    STAGING(
       "https://yggdrasil-auth-staging.mojang.com",
       "https://api-staging.mojang.com",
-      "https://yggdrasil-auth-session-staging.mojang.zone",
+      "https://api-sb-staging.minecraftservices.com",
       "https://api-staging.minecraftservices.com"
    );
 
