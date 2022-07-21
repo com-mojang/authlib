@@ -9,5 +9,7 @@ public interface SocialInteractionsService {
 
    boolean chatAllowed();
 
+   boolean telemetryAllowed();
+
    boolean isBlockedPlayer(UUID var1);
 }

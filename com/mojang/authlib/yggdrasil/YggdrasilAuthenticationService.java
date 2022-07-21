@@ -122,7 +122,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
    }
 
    public YggdrasilSocialInteractionsService createSocialInteractionsService(String accessToken) throws AuthenticationException {
-      return new YggdrasilSocialInteractionsService(this, accessToken, this.environment);
+      return new YggdrasilSocialInteractionsService(accessToken, this.getProxy(), this.environment);
    }
 
    private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {

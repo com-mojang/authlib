@@ -1,5 +1,7 @@
 package com.mojang.authlib.yggdrasil.response;
 
+import java.util.Optional;
+
 public class PrivilegesResponse extends Response {
    private PrivilegesResponse.Privileges privileges = new PrivilegesResponse.Privileges();
 
@@ -11,17 +13,22 @@ public class PrivilegesResponse extends Response {
       private PrivilegesResponse.Privileges.Privilege onlineChat = new PrivilegesResponse.Privileges.Privilege();
       private PrivilegesResponse.Privileges.Privilege multiplayerServer = new PrivilegesResponse.Privileges.Privilege();
       private PrivilegesResponse.Privileges.Privilege multiplayerRealms = new PrivilegesResponse.Privileges.Privilege();
+      private PrivilegesResponse.Privileges.Privilege telemetry = new PrivilegesResponse.Privileges.Privilege();
 
-      public PrivilegesResponse.Privileges.Privilege getOnlineChat() {
-         return this.onlineChat;
+      public Optional<PrivilegesResponse.Privileges.Privilege> getOnlineChat() {
+         return Optional.ofNullable(this.onlineChat);
       }
 
-      public PrivilegesResponse.Privileges.Privilege getMultiplayerServer() {
-         return this.multiplayerServer;
+      public Optional<PrivilegesResponse.Privileges.Privilege> getMultiplayerServer() {
+         return Optional.ofNullable(this.multiplayerServer);
       }
 
-      public PrivilegesResponse.Privileges.Privilege getMultiplayerRealms() {
-         return this.multiplayerRealms;
+      public Optional<PrivilegesResponse.Privileges.Privilege> getMultiplayerRealms() {
+         return Optional.ofNullable(this.multiplayerRealms);
+      }
+
+      public Optional<PrivilegesResponse.Privileges.Privilege> getTelemetry() {
+         return Optional.ofNullable(this.telemetry);
       }
 
       public class Privilege {
