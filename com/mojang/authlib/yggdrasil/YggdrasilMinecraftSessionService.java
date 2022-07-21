@@ -21,6 +21,7 @@ import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -78,10 +79,14 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
    }
 
    @Override
-   public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException {
+   public GameProfile hasJoinedServer(GameProfile user, String serverId, InetAddress address) throws AuthenticationUnavailableException {
       Map<String, Object> arguments = new HashMap();
       arguments.put("username", user.getName());
       arguments.put("serverId", serverId);
+      if (address != null) {
+         arguments.put("ip", address.getHostAddress());
+      }
+
       URL url = HttpAuthenticationService.concatenateURL(CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
 
       try {
@@ -96,9 +101,9 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          } else {
             return null;
          }
-      } catch (AuthenticationUnavailableException var7) {
-         throw var7;
-      } catch (AuthenticationException var8) {
+      } catch (AuthenticationUnavailableException var8) {
+         throw var8;
+      } catch (AuthenticationException var9) {
          return null;
       }
    }

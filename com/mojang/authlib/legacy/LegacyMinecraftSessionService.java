@@ -7,6 +7,7 @@ import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
 
       try {
          String response = this.getAuthenticationService().performGetRequest(url);
-         if (!response.equals("OK")) {
+         if (!"OK".equals(response)) {
             throw new AuthenticationException(response);
          }
       } catch (IOException var7) {
@@ -39,7 +40,7 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
    }
 
    @Override
-   public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException {
+   public GameProfile hasJoinedServer(GameProfile user, String serverId, InetAddress address) throws AuthenticationUnavailableException {
       Map<String, Object> arguments = new HashMap();
       arguments.put("user", user.getName());
       arguments.put("serverId", serverId);
@@ -47,9 +48,9 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
 
       try {
          String response = this.getAuthenticationService().performGetRequest(url);
-         return response.equals("YES") ? user : null;
-      } catch (IOException var6) {
-         throw new AuthenticationUnavailableException(var6);
+         return "YES".equals(response) ? user : null;
+      } catch (IOException var7) {
+         throw new AuthenticationUnavailableException(var7);
       }
    }
 

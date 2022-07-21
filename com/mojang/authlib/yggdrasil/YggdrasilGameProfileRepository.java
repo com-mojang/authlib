@@ -55,7 +55,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
                      ProfileSearchResultsResponse.class
                   );
                failCount = 0;
-               LOGGER.debug("Page {} returned {} results, parsing", new Object[]{page, response.getProfiles().length});
+               LOGGER.debug("Page {} returned {} results, parsing", new Object[]{0, response.getProfiles().length});
                Set<String> missing = Sets.newHashSet(request);
 
                for(GameProfile profile : response.getProfiles()) {

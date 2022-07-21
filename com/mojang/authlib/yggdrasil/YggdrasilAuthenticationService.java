@@ -69,7 +69,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
          } else if (StringUtils.isNotBlank(result.getError())) {
             if ("UserMigratedException".equals(result.getCause())) {
                throw new UserMigratedException(result.getErrorMessage());
-            } else if (result.getError().equals("ForbiddenOperationException")) {
+            } else if ("ForbiddenOperationException".equals(result.getError())) {
                throw new InvalidCredentialsException(result.getErrorMessage());
             } else {
                throw new AuthenticationException(result.getErrorMessage());
