@@ -12,7 +12,9 @@ import com.mojang.authlib.yggdrasil.response.AuthenticationResponse;
 import com.mojang.authlib.yggdrasil.response.RefreshResponse;
 import com.mojang.authlib.yggdrasil.response.User;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,7 +90,13 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             this.getModifiableUserProperties().clear();
             if (response.getUser() != null && response.getUser().getProperties() != null) {
                for(User.Property property : response.getUser().getProperties()) {
-                  this.getModifiableUserProperties().put(property.getKey(), property.getValue());
+                  Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
+                  if (values == null) {
+                     values = new ArrayList();
+                     this.getModifiableUserProperties().put(property.getKey(), values);
+                  }
+
+                  values.add(property.getValue());
                }
             }
 
@@ -127,7 +135,13 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             this.getModifiableUserProperties().clear();
             if (response.getUser() != null && response.getUser().getProperties() != null) {
                for(User.Property property : response.getUser().getProperties()) {
-                  this.getModifiableUserProperties().put(property.getKey(), property.getValue());
+                  Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
+                  if (values == null) {
+                     values = new ArrayList();
+                     this.getModifiableUserProperties().put(property.getKey(), values);
+                  }
+
+                  values.add(property.getValue());
                }
             }
 

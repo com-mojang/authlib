@@ -1,7 +1,7 @@
 package com.mojang.authlib;
 
-import com.google.common.collect.Multimap;
 import com.mojang.authlib.exceptions.AuthenticationException;
+import java.util.Collection;
 import java.util.Map;
 
 public interface UserAuthentication {
@@ -33,5 +33,5 @@ public interface UserAuthentication {
 
    String getUserID();
 
-   Multimap<String, String> getUserProperties();
+   Map<String, Collection<String>> getUserProperties();
 }
