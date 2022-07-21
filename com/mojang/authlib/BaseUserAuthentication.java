@@ -1,19 +1,26 @@
 package com.mojang.authlib;
 
-import java.util.Collection;
-import java.util.Collections;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class BaseUserAuthentication implements UserAuthentication {
+   private static final Logger LOGGER = LogManager.getLogger();
    protected static final String STORAGE_KEY_PROFILE_NAME = "displayName";
    protected static final String STORAGE_KEY_PROFILE_ID = "uuid";
+   protected static final String STORAGE_KEY_PROFILE_PROPERTIES = "profileProperties";
    protected static final String STORAGE_KEY_USER_NAME = "username";
    protected static final String STORAGE_KEY_USER_ID = "userid";
+   protected static final String STORAGE_KEY_USER_PROPERTIES = "userProperties";
    private final AuthenticationService authenticationService;
-   private final Map<String, Collection<String>> userProperties = new HashMap();
+   private final PropertyMap userProperties = new PropertyMap();
    private String userid;
    private String username;
    private String password;
@@ -71,24 +78,59 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
    }
 
    @Override
-   public void loadFromStorage(Map<String, String> credentials) {
+   public void loadFromStorage(Map<String, Object> credentials) {
       this.logOut();
-      this.setUsername((String)credentials.get("username"));
+      this.setUsername(String.valueOf(credentials.get("username")));
       if (credentials.containsKey("userid")) {
-         this.userid = (String)credentials.get("userid");
+         this.userid = String.valueOf(credentials.get("userid"));
       } else {
          this.userid = this.username;
       }
 
+      if (credentials.containsKey("userProperties")) {
+         try {
+            for(Map<String, String> propertyMap : (List)credentials.get("userProperties")) {
+               String name = (String)propertyMap.get("name");
+               String value = (String)propertyMap.get("value");
+               String signature = (String)propertyMap.get("signature");
+               if (signature == null) {
+                  this.getModifiableUserProperties().put(name, new Property(name, value));
+               } else {
+                  this.getModifiableUserProperties().put(name, new Property(name, value, signature));
+               }
+            }
+         } catch (Throwable var10) {
+            LOGGER.warn("Couldn't deserialize user properties", var10);
+         }
+      }
+
       if (credentials.containsKey("displayName") && credentials.containsKey("uuid")) {
-         this.setSelectedProfile(new GameProfile((String)credentials.get("uuid"), (String)credentials.get("displayName")));
+         GameProfile profile = new GameProfile(String.valueOf(credentials.get("uuid")), String.valueOf(credentials.get("displayName")));
+         if (credentials.containsKey("profileProperties")) {
+            try {
+               for(Map<String, String> propertyMap : (List)credentials.get("profileProperties")) {
+                  String name = (String)propertyMap.get("name");
+                  String value = (String)propertyMap.get("value");
+                  String signature = (String)propertyMap.get("signature");
+                  if (signature == null) {
+                     profile.getProperties().put(name, new Property(name, value));
+                  } else {
+                     profile.getProperties().put(name, new Property(name, value, signature));
+                  }
+               }
+            } catch (Throwable var9) {
+               LOGGER.warn("Couldn't deserialize profile properties", var9);
+            }
+         }
+
+         this.setSelectedProfile(profile);
       }
 
    }
 
    @Override
-   public Map<String, String> saveForStorage() {
-      Map<String, String> result = new HashMap();
+   public Map<String, Object> saveForStorage() {
+      Map<String, Object> result = new HashMap();
       if (this.getUsername() != null) {
          result.put("username", this.getUsername());
       }
@@ -99,9 +141,37 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
          result.put("username", this.getUsername());
       }
 
-      if (this.getSelectedProfile() != null) {
-         result.put("displayName", this.getSelectedProfile().getName());
-         result.put("uuid", this.getSelectedProfile().getId());
+      if (!this.getUserProperties().isEmpty()) {
+         List<Map<String, String>> properties = new ArrayList();
+
+         for(Property userProperty : this.getUserProperties().values()) {
+            Map<String, String> property = new HashMap();
+            property.put("name", userProperty.getName());
+            property.put("value", userProperty.getValue());
+            property.put("signature", userProperty.getSignature());
+            properties.add(property);
+         }
+
+         result.put("userProperties", properties);
+      }
+
+      GameProfile selectedProfile = this.getSelectedProfile();
+      if (selectedProfile != null) {
+         result.put("displayName", selectedProfile.getName());
+         result.put("uuid", selectedProfile.getId());
+         List<Map<String, String>> properties = new ArrayList();
+
+         for(Property profileProperty : selectedProfile.getProperties().values()) {
+            Map<String, String> property = new HashMap();
+            property.put("name", profileProperty.getName());
+            property.put("value", profileProperty.getValue());
+            property.put("signature", profileProperty.getSignature());
+            properties.add(property);
+         }
+
+         if (!properties.isEmpty()) {
+            result.put("profileProperties", properties);
+         }
       }
 
       return result;
@@ -151,11 +221,17 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
    }
 
    @Override
-   public Map<String, Collection<String>> getUserProperties() {
-      return this.isLoggedIn() ? Collections.unmodifiableMap(this.getModifiableUserProperties()) : Collections.unmodifiableMap(new HashMap());
+   public PropertyMap getUserProperties() {
+      if (this.isLoggedIn()) {
+         PropertyMap result = new PropertyMap();
+         result.putAll(this.getModifiableUserProperties());
+         return result;
+      } else {
+         return new PropertyMap();
+      }
    }
 
-   protected Map<String, Collection<String>> getModifiableUserProperties() {
+   protected PropertyMap getModifiableUserProperties() {
       return this.userProperties;
    }
 

@@ -13,9 +13,7 @@ import com.mojang.authlib.yggdrasil.response.AuthenticationResponse;
 import com.mojang.authlib.yggdrasil.response.RefreshResponse;
 import com.mojang.authlib.yggdrasil.response.User;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -104,15 +102,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
    protected void updateUserProperties(User user) {
       if (user != null) {
          if (user.getProperties() != null) {
-            for(User.Property property : user.getProperties()) {
-               Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
-               if (values == null) {
-                  values = new ArrayList();
-                  this.getModifiableUserProperties().put(property.getKey(), values);
-               }
-
-               values.add(property.getValue());
-            }
+            this.getModifiableUserProperties().putAll(user.getProperties());
          }
 
       }
@@ -203,14 +193,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
    }
 
    @Override
-   public void loadFromStorage(Map<String, String> credentials) {
+   public void loadFromStorage(Map<String, Object> credentials) {
       super.loadFromStorage(credentials);
-      this.accessToken = (String)credentials.get("accessToken");
+      this.accessToken = String.valueOf(credentials.get("accessToken"));
    }
 
    @Override
-   public Map<String, String> saveForStorage() {
-      Map<String, String> result = super.saveForStorage();
+   public Map<String, Object> saveForStorage() {
+      Map<String, Object> result = super.saveForStorage();
       if (StringUtils.isNotBlank(this.getAuthenticatedToken())) {
          result.put("accessToken", this.getAuthenticatedToken());
       }

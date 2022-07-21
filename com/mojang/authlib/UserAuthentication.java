@@ -1,7 +1,7 @@
 package com.mojang.authlib;
 
 import com.mojang.authlib.exceptions.AuthenticationException;
-import java.util.Collection;
+import com.mojang.authlib.properties.PropertyMap;
 import java.util.Map;
 
 public interface UserAuthentication {
@@ -21,9 +21,9 @@ public interface UserAuthentication {
 
    void selectGameProfile(GameProfile var1) throws AuthenticationException;
 
-   void loadFromStorage(Map<String, String> var1);
+   void loadFromStorage(Map<String, Object> var1);
 
-   Map<String, String> saveForStorage();
+   Map<String, Object> saveForStorage();
 
    void setUsername(String var1);
 
@@ -33,7 +33,7 @@ public interface UserAuthentication {
 
    String getUserID();
 
-   Map<String, Collection<String>> getUserProperties();
+   PropertyMap getUserProperties();
 
    UserType getUserType();
 }

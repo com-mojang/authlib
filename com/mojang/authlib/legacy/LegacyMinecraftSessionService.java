@@ -54,8 +54,13 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
    }
 
    @Override
-   public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile) {
+   public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) {
       return new HashMap();
+   }
+
+   @Override
+   public GameProfile fillProfileProperties(GameProfile profile) {
+      return profile;
    }
 
    public LegacyAuthenticationService getAuthenticationService() {

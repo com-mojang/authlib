@@ -7,6 +7,7 @@ public class MinecraftTexturesPayload {
    private long timestamp;
    private String profileId;
    private String profileName;
+   private boolean isPublic;
    private Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> textures;
 
    public long getTimestamp() {
@@ -19,6 +20,10 @@ public class MinecraftTexturesPayload {
 
    public String getProfileName() {
       return this.profileName;
+   }
+
+   public boolean isPublic() {
+      return this.isPublic;
    }
 
    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures() {

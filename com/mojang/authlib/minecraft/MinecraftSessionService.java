@@ -10,5 +10,7 @@ public interface MinecraftSessionService {
 
    GameProfile hasJoinedServer(GameProfile var1, String var2) throws AuthenticationUnavailableException;
 
-   Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile var1);
+   Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile var1, boolean var2);
+
+   GameProfile fillProfileProperties(GameProfile var1);
 }

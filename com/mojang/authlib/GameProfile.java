@@ -1,13 +1,13 @@
 package com.mojang.authlib;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.mojang.authlib.properties.PropertyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class GameProfile {
    private final String id;
    private final String name;
-   private final Map<String, ProfileProperty> properties = new HashMap();
+   private final PropertyMap properties = new PropertyMap();
    private boolean legacy;
 
    public GameProfile(String id, String name) {
@@ -27,7 +27,7 @@ public class GameProfile {
       return this.name;
    }
 
-   public Map<String, ProfileProperty> getProperties() {
+   public PropertyMap getProperties() {
       return this.properties;
    }
 
@@ -56,7 +56,12 @@ public class GameProfile {
    }
 
    public String toString() {
-      return "GameProfile{id='" + this.id + '\'' + ", name='" + this.name + '\'' + '}';
+      return new ToStringBuilder(this)
+         .append("id", this.id)
+         .append("name", this.name)
+         .append("properties", this.properties)
+         .append("legacy", this.legacy)
+         .toString();
    }
 
    public boolean isLegacy() {
