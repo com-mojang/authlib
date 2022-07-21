@@ -1,5 +1,6 @@
 package com.mojang.authlib.properties;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -38,20 +39,16 @@ public class Property {
       return this.signature != null;
    }
 
+   @Deprecated
    public boolean isSignatureValid(PublicKey publicKey) {
       try {
          Signature signature = Signature.getInstance("SHA1withRSA");
          signature.initVerify(publicKey);
-         signature.update(this.value.getBytes());
+         signature.update(this.value.getBytes(StandardCharsets.US_ASCII));
          return signature.verify(Base64.getDecoder().decode(this.signature));
-      } catch (NoSuchAlgorithmException var3) {
+      } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException var3) {
          var3.printStackTrace();
-      } catch (InvalidKeyException var4) {
-         var4.printStackTrace();
-      } catch (SignatureException var5) {
-         var5.printStackTrace();
+         return false;
       }
-
-      return false;
    }
 }

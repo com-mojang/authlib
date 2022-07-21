@@ -28,16 +28,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +44,6 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
    private final String baseUrl;
    private final URL joinUrl;
    private final URL checkUrl;
-   private final PublicKey publicKey;
    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
    private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder.newBuilder()
       .expireAfterWrite(6L, TimeUnit.HOURS)
@@ -63,16 +58,6 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
       this.baseUrl = env.getSessionHost() + "/session/minecraft/";
       this.joinUrl = HttpAuthenticationService.constantURL(this.baseUrl + "join");
       this.checkUrl = HttpAuthenticationService.constantURL(this.baseUrl + "hasJoined");
-
-      try {
-         X509EncodedKeySpec spec = new X509EncodedKeySpec(
-            IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der"))
-         );
-         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-         this.publicKey = keyFactory.generatePublic(spec);
-      } catch (Exception var5) {
-         throw new Error("Missing/invalid yggdrasil public key!");
-      }
    }
 
    @Override
@@ -126,7 +111,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
                throw new InsecureTextureException("Signature is missing from textures payload");
             }
 
-            if (!textureProperty.isSignatureValid(this.publicKey)) {
+            if (!this.getAuthenticationService().getServicesKey().validateProperty(textureProperty)) {
                LOGGER.error("Textures payload has been tampered with (signature invalid)");
                throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
             }
@@ -171,7 +156,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
       if (!property.hasSignature()) {
          LOGGER.error("Signature is missing from Property {}", property.getName());
          throw new InsecurePublicKeyException.MissingException();
-      } else if (!property.isSignatureValid(this.publicKey)) {
+      } else if (!this.getAuthenticationService().getServicesKey().validateProperty(property)) {
          LOGGER.error("Property {} has been tampered with (signature invalid)", property.getName());
          throw new InsecurePublicKeyException.InvalidException("Property has been tampered with (signature invalid)");
       } else {
@@ -194,7 +179,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             LOGGER.debug("Successfully fetched profile properties for {}", result);
             return result;
          }
-      } catch (AuthenticationException var6) {
+      } catch (IllegalArgumentException | AuthenticationException var6) {
          LOGGER.warn("Couldn't look up profile properties for {}", profile, var6);
          return profile;
       }
