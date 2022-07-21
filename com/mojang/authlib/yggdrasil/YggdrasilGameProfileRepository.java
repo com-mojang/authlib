@@ -34,8 +34,6 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
       for(String name : names) {
          if (!Strings.isNullOrEmpty(name)) {
             criteria.add(new YggdrasilGameProfileRepository.ProfileCriteria(name, agent));
-         } else {
-            callback.onProfileLookupFailed(new GameProfile(null, name), new ProfileIncompleteException("Profile name is missing or empty"));
          }
       }
 
