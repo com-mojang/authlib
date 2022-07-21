@@ -2,6 +2,7 @@ package com.mojang.authlib.yggdrasil;
 
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
@@ -15,6 +16,7 @@ import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
+import com.mojang.util.UUIDTypeAdapter;
 import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -23,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -35,7 +38,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
    private static final URL JOIN_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/join");
    private static final URL CHECK_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/hasJoined");
    private final PublicKey publicKey;
-   private final Gson gson = new Gson();
+   private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
    protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
       super(authenticationService);
@@ -140,21 +143,28 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
    @Override
    public GameProfile fillProfileProperties(GameProfile profile) {
-      if (profile.getId() != null && profile.getId().length() != 0) {
+      if (profile.getId() == null) {
+         return profile;
+      } else {
          try {
-            URL url = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/profile/" + profile.getId());
+            URL url = HttpAuthenticationService.constantURL(
+               "https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(profile.getId())
+            );
             MinecraftProfilePropertiesResponse response = this.getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
-            LOGGER.debug("Successfully fetched profile properties for " + profile);
-            GameProfile result = new GameProfile(response.getId(), response.getName());
-            result.getProperties().putAll(response.getProperties());
-            profile.getProperties().putAll(response.getProperties());
-            return result;
+            if (response == null) {
+               LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
+               return profile;
+            } else {
+               LOGGER.debug("Successfully fetched profile properties for " + profile);
+               GameProfile result = new GameProfile(response.getId(), response.getName());
+               result.getProperties().putAll(response.getProperties());
+               profile.getProperties().putAll(response.getProperties());
+               return result;
+            }
          } catch (AuthenticationException var5) {
             LOGGER.warn("Couldn't look up profile properties for " + profile, var5);
             return profile;
          }
-      } else {
-         return profile;
       }
    }
 

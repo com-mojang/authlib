@@ -6,6 +6,7 @@ import com.mojang.authlib.HttpUserAuthentication;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.util.UUIDTypeAdapter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
             String profileName = split[2];
             String sessionToken = split[3];
             if (!StringUtils.isBlank(profileId) && !StringUtils.isBlank(profileName) && !StringUtils.isBlank(sessionToken)) {
-               this.setSelectedProfile(new GameProfile(profileId, profileName));
+               this.setSelectedProfile(new GameProfile(UUIDTypeAdapter.fromString(profileId), profileName));
                this.sessionToken = sessionToken;
                this.setUserType(UserType.LEGACY);
             } else {

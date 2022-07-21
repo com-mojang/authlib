@@ -1,17 +1,18 @@
 package com.mojang.authlib;
 
 import com.mojang.authlib.properties.PropertyMap;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class GameProfile {
-   private final String id;
+   private final UUID id;
    private final String name;
    private final PropertyMap properties = new PropertyMap();
    private boolean legacy;
 
-   public GameProfile(String id, String name) {
-      if (StringUtils.isBlank(id) && StringUtils.isBlank(name)) {
+   public GameProfile(UUID id, String name) {
+      if (id == null && StringUtils.isBlank(name)) {
          throw new IllegalArgumentException("Name and ID cannot both be blank");
       } else {
          this.id = id;
@@ -19,7 +20,7 @@ public class GameProfile {
       }
    }
 
-   public String getId() {
+   public UUID getId() {
       return this.id;
    }
 
@@ -32,7 +33,7 @@ public class GameProfile {
    }
 
    public boolean isComplete() {
-      return StringUtils.isNotBlank(this.getId()) && StringUtils.isNotBlank(this.getName());
+      return this.id != null && StringUtils.isNotBlank(this.getName());
    }
 
    public boolean equals(Object o) {

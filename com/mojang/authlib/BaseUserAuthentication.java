@@ -2,6 +2,7 @@ package com.mojang.authlib;
 
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.util.UUIDTypeAdapter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,7 +106,9 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
       }
 
       if (credentials.containsKey("displayName") && credentials.containsKey("uuid")) {
-         GameProfile profile = new GameProfile(String.valueOf(credentials.get("uuid")), String.valueOf(credentials.get("displayName")));
+         GameProfile profile = new GameProfile(
+            UUIDTypeAdapter.fromString(String.valueOf(credentials.get("uuid"))), String.valueOf(credentials.get("displayName"))
+         );
          if (credentials.containsKey("profileProperties")) {
             try {
                for(Map<String, String> propertyMap : (List)credentials.get("profileProperties")) {

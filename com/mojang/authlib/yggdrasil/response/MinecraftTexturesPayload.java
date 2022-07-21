@@ -2,10 +2,11 @@ package com.mojang.authlib.yggdrasil.response;
 
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import java.util.Map;
+import java.util.UUID;
 
 public class MinecraftTexturesPayload {
    private long timestamp;
-   private String profileId;
+   private UUID profileId;
    private String profileName;
    private boolean isPublic;
    private Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> textures;
@@ -14,7 +15,7 @@ public class MinecraftTexturesPayload {
       return this.timestamp;
    }
 
-   public String getProfileId() {
+   public UUID getProfileId() {
       return this.profileId;
    }
 
