@@ -4,8 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.exceptions.MinecraftClientException;
+import com.mojang.util.ByteBufferTypeAdapter;
 import com.mojang.util.InstantTypeAdapter;
 import com.mojang.util.UUIDTypeAdapter;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,7 +37,11 @@ public class ObjectMapper {
 
    public static ObjectMapper create() {
       return new ObjectMapper(
-         new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).registerTypeAdapter(Instant.class, new InstantTypeAdapter()).create()
+         new GsonBuilder()
+            .registerTypeAdapter(UUID.class, new UUIDTypeAdapter())
+            .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
+            .registerTypeHierarchyAdapter(ByteBuffer.class, new ByteBufferTypeAdapter().nullSafe())
+            .create()
       );
    }
 }

@@ -1,15 +1,16 @@
 package com.mojang.authlib.yggdrasil.response;
 
 import com.google.gson.annotations.SerializedName;
+import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
 public class KeyPairResponse extends Response {
    private KeyPairResponse.KeyPair keyPair;
    @Nullable
    @SerializedName("publicKeySignature")
-   private String legacyPublicKeySignature;
+   private ByteBuffer legacyPublicKeySignature;
    @SerializedName("publicKeySignatureV2")
-   private String publicKeySignature;
+   private ByteBuffer publicKeySignature;
    private String expiresAt;
    private String refreshedAfter;
 
@@ -22,11 +23,11 @@ public class KeyPairResponse extends Response {
    }
 
    @Nullable
-   public String getLegacyPublicKeySignature() {
+   public ByteBuffer getLegacyPublicKeySignature() {
       return this.legacyPublicKeySignature;
    }
 
-   public String getPublicKeySignature() {
+   public ByteBuffer getPublicKeySignature() {
       return this.publicKeySignature;
    }
 
