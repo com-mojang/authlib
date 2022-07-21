@@ -12,8 +12,8 @@ public class Property {
    private final String value;
    private final String signature;
 
-   public Property(String value, String name) {
-      this(value, name, null);
+   public Property(String name, String value) {
+      this(name, value, null);
    }
 
    public Property(String name, String value, String signature) {

@@ -1,8 +1,10 @@
 package com.mojang.authlib.minecraft;
 
+import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 public interface UserApiService {
    UserApiService.UserProperties OFFLINE_PROPERTIES = new UserApiService.UserProperties(
@@ -27,6 +29,12 @@ public interface UserApiService {
       public TelemetrySession newTelemetrySession(Executor executor) {
          return TelemetrySession.DISABLED;
       }
+
+      @Nullable
+      @Override
+      public KeyPairResponse getKeyPair() {
+         return null;
+      }
    };
 
    UserApiService.UserProperties properties();
@@ -36,6 +44,9 @@ public interface UserApiService {
    void refreshBlockList();
 
    TelemetrySession newTelemetrySession(Executor var1);
+
+   @Nullable
+   KeyPairResponse getKeyPair();
 
    public static enum UserFlag {
       SERVERS_ALLOWED,

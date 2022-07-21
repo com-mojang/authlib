@@ -11,6 +11,7 @@ import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
+import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
 import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 import java.net.Proxy;
 import java.net.URL;
@@ -25,6 +26,7 @@ public class YggdrasilUserApiService implements UserApiService {
    private static final UUID ZERO_UUID = new UUID(0L, 0L);
    private final URL routePrivileges;
    private final URL routeBlocklist;
+   private final URL routeKeyPair;
    private final MinecraftClient minecraftClient;
    private final Environment environment;
    private UserApiService.UserProperties properties = OFFLINE_PROPERTIES;
@@ -38,6 +40,7 @@ public class YggdrasilUserApiService implements UserApiService {
       this.environment = env;
       this.routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/attributes");
       this.routeBlocklist = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privacy/blocklist");
+      this.routeKeyPair = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/certificates");
       this.fetchProperties();
    }
 
@@ -51,6 +54,11 @@ public class YggdrasilUserApiService implements UserApiService {
       return (TelemetrySession)(!this.properties.flag(UserApiService.UserFlag.TELEMETRY_ENABLED)
          ? TelemetrySession.DISABLED
          : new YggdrassilTelemetrySession(this.minecraftClient, this.environment, executor));
+   }
+
+   @Override
+   public KeyPairResponse getKeyPair() {
+      return this.minecraftClient.post(this.routeKeyPair, KeyPairResponse.class);
    }
 
    @Override
