@@ -1,5 +1,7 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.mojang.authlib.Environment;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
@@ -9,7 +11,7 @@ import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
-import com.mojang.authlib.yggdrasil.response.PrivilegesResponse;
+import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 import java.net.Proxy;
 import java.net.URL;
 import java.time.Instant;
@@ -25,10 +27,7 @@ public class YggdrasilUserApiService implements UserApiService {
    private final URL routeBlocklist;
    private final MinecraftClient minecraftClient;
    private final Environment environment;
-   private boolean serversAllowed;
-   private boolean realmsAllowed;
-   private boolean chatAllowed;
-   private boolean telemetryAllowed;
+   private UserApiService.UserProperties properties = OFFLINE_PROPERTIES;
    @Nullable
    private Instant nextAcceptableBlockRequest;
    @Nullable
@@ -37,34 +36,19 @@ public class YggdrasilUserApiService implements UserApiService {
    public YggdrasilUserApiService(String accessToken, Proxy proxy, Environment env) throws AuthenticationException {
       this.minecraftClient = new MinecraftClient(accessToken, proxy);
       this.environment = env;
-      this.routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privileges");
+      this.routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/attributes");
       this.routeBlocklist = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privacy/blocklist");
-      this.checkPrivileges();
+      this.fetchProperties();
    }
 
    @Override
-   public boolean serversAllowed() {
-      return this.serversAllowed;
-   }
-
-   @Override
-   public boolean realmsAllowed() {
-      return this.realmsAllowed;
-   }
-
-   @Override
-   public boolean chatAllowed() {
-      return this.chatAllowed;
-   }
-
-   @Override
-   public boolean telemetryAllowed() {
-      return this.telemetryAllowed;
+   public UserApiService.UserProperties properties() {
+      return this.properties;
    }
 
    @Override
    public TelemetrySession newTelemetrySession(Executor executor) {
-      return (TelemetrySession)(!this.telemetryAllowed
+      return (TelemetrySession)(!this.properties.flag(UserApiService.UserFlag.TELEMETRY_ENABLED)
          ? TelemetrySession.DISABLED
          : new YggdrassilTelemetrySession(this.minecraftClient, this.environment, executor));
    }
@@ -85,35 +69,65 @@ public class YggdrasilUserApiService implements UserApiService {
       }
    }
 
+   @Override
+   public void refreshBlockList() {
+      if (this.blockList == null || this.canMakeBlockListRequest()) {
+         this.blockList = this.forceFetchBlockList();
+      }
+
+   }
+
    @Nullable
    private Set<UUID> fetchBlockList() {
-      if (this.nextAcceptableBlockRequest != null && this.nextAcceptableBlockRequest.isAfter(Instant.now())) {
-         return null;
-      } else {
-         this.nextAcceptableBlockRequest = Instant.now().plusSeconds(120L);
+      return !this.canMakeBlockListRequest() ? null : this.forceFetchBlockList();
+   }
 
-         try {
-            BlockListResponse response = this.minecraftClient.get(this.routeBlocklist, BlockListResponse.class);
-            return response.getBlockedProfiles();
-         } catch (MinecraftClientHttpException var2) {
-            return null;
-         } catch (MinecraftClientException var3) {
-            return null;
-         }
+   private boolean canMakeBlockListRequest() {
+      return this.nextAcceptableBlockRequest == null || Instant.now().isAfter(this.nextAcceptableBlockRequest);
+   }
+
+   private Set<UUID> forceFetchBlockList() {
+      this.nextAcceptableBlockRequest = Instant.now().plusSeconds(120L);
+
+      try {
+         BlockListResponse response = this.minecraftClient.get(this.routeBlocklist, BlockListResponse.class);
+         return response.getBlockedProfiles();
+      } catch (MinecraftClientHttpException var2) {
+         return null;
+      } catch (MinecraftClientException var3) {
+         return null;
       }
    }
 
-   private void checkPrivileges() throws AuthenticationException {
+   private void fetchProperties() throws AuthenticationException {
       try {
-         PrivilegesResponse response = this.minecraftClient.get(this.routePrivileges, PrivilegesResponse.class);
-         this.chatAllowed = response.getPrivileges().getOnlineChat().map(PrivilegesResponse.Privileges.Privilege::isEnabled).orElse(false);
-         this.serversAllowed = response.getPrivileges().getMultiplayerServer().map(PrivilegesResponse.Privileges.Privilege::isEnabled).orElse(false);
-         this.realmsAllowed = response.getPrivileges().getMultiplayerRealms().map(PrivilegesResponse.Privileges.Privilege::isEnabled).orElse(false);
-         this.telemetryAllowed = response.getPrivileges().getTelemetry().map(PrivilegesResponse.Privileges.Privilege::isEnabled).orElse(false);
-      } catch (MinecraftClientHttpException var2) {
-         throw var2.toAuthenticationException();
-      } catch (MinecraftClientException var3) {
-         throw var3.toAuthenticationException();
+         UserAttributesResponse response = this.minecraftClient.get(this.routePrivileges, UserAttributesResponse.class);
+         Builder<UserApiService.UserFlag> flags = ImmutableSet.builder();
+         UserAttributesResponse.Privileges privileges = response.getPrivileges();
+         if (privileges != null) {
+            addFlagIfUserHasPrivilege(privileges.getOnlineChat(), UserApiService.UserFlag.CHAT_ALLOWED, flags);
+            addFlagIfUserHasPrivilege(privileges.getMultiplayerServer(), UserApiService.UserFlag.SERVERS_ALLOWED, flags);
+            addFlagIfUserHasPrivilege(privileges.getMultiplayerRealms(), UserApiService.UserFlag.REALMS_ALLOWED, flags);
+            addFlagIfUserHasPrivilege(privileges.getTelemetry(), UserApiService.UserFlag.TELEMETRY_ENABLED, flags);
+         }
+
+         UserAttributesResponse.ProfanityFilterPreferences profanityFilterPreferences = response.getProfanityFilterPreferences();
+         if (profanityFilterPreferences != null && profanityFilterPreferences.isEnabled()) {
+            flags.add(UserApiService.UserFlag.PROFANITY_FILTER_ENABLED);
+         }
+
+         this.properties = new UserApiService.UserProperties(flags.build());
+      } catch (MinecraftClientHttpException var5) {
+         throw var5.toAuthenticationException();
+      } catch (MinecraftClientException var6) {
+         throw var6.toAuthenticationException();
       }
+   }
+
+   private static void addFlagIfUserHasPrivilege(boolean privilege, UserApiService.UserFlag value, Builder<UserApiService.UserFlag> output) {
+      if (privilege) {
+         output.add(value);
+      }
+
    }
 }
