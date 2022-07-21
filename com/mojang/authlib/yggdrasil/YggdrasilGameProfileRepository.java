@@ -55,17 +55,17 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
                      ProfileSearchResultsResponse.class
                   );
                failCount = 0;
-               LOGGER.debug("Page {} returned {} results, parsing", new Object[]{0, response.getProfiles().length});
+               LOGGER.debug("Page {} returned {} results, parsing", 0, response.getProfiles().length);
                Set<String> missing = Sets.newHashSet(request);
 
                for(GameProfile profile : response.getProfiles()) {
-                  LOGGER.debug("Successfully looked up profile {}", new Object[]{profile});
+                  LOGGER.debug("Successfully looked up profile {}", profile);
                   missing.remove(profile.getName().toLowerCase());
                   callback.onProfileLookupSucceeded(profile);
                }
 
                for(String name : missing) {
-                  LOGGER.debug("Couldn't find profile {}", new Object[]{name});
+                  LOGGER.debug("Couldn't find profile {}", name);
                   callback.onProfileLookupFailed(new GameProfile(null, name), new ProfileNotFoundException("Server did not find the requested profile"));
                }
 
@@ -77,7 +77,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
                AuthenticationException e = var18;
                if (++failCount == 3) {
                   for(String name : request) {
-                     LOGGER.debug("Couldn't find profile {} because of a server error", new Object[]{name});
+                     LOGGER.debug("Couldn't find profile {} because of a server error", name);
                      callback.onProfileLookupFailed(new GameProfile(null, name), e);
                   }
                } else {

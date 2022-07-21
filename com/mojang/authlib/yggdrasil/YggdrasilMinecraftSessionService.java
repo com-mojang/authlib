@@ -135,9 +135,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return new HashMap();
          }
 
-         if (result.getTextures() == null) {
-            return new HashMap();
-         } else {
+         if (result != null && result.getTextures() != null) {
             for(Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
                if (!isWhitelistedDomain(((MinecraftProfileTexture)entry.getValue()).getUrl())) {
                   LOGGER.error("Textures payload has been tampered with (non-whitelisted domain)");
@@ -146,6 +144,8 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             }
 
             return result.getTextures();
+         } else {
+            return new HashMap();
          }
       }
    }
