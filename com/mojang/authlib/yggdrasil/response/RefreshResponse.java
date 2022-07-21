@@ -7,6 +7,7 @@ public class RefreshResponse extends Response {
    private String clientToken;
    private GameProfile selectedProfile;
    private GameProfile[] availableProfiles;
+   private User user;
 
    public String getAccessToken() {
       return this.accessToken;
@@ -22,5 +23,9 @@ public class RefreshResponse extends Response {
 
    public GameProfile getSelectedProfile() {
       return this.selectedProfile;
+   }
+
+   public User getUser() {
+      return this.user;
    }
 }
