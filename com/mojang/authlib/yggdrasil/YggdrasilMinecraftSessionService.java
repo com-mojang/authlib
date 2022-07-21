@@ -21,6 +21,8 @@ import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -28,6 +30,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
@@ -36,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
+   private static final String[] WHITELISTED_DOMAINS = new String[]{".minecraft.net", ".mojang.com"};
    private static final Logger LOGGER = LogManager.getLogger();
    private static final String BASE_URL = "https://sessionserver.mojang.com/session/minecraft/";
    private static final URL JOIN_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/join");
@@ -121,12 +125,23 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          try {
             String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
             result = (MinecraftTexturesPayload)this.gson.fromJson(json, MinecraftTexturesPayload.class);
-         } catch (JsonParseException var6) {
-            LOGGER.error("Could not decode textures payload", var6);
+         } catch (JsonParseException var7) {
+            LOGGER.error("Could not decode textures payload", var7);
             return new HashMap();
          }
 
-         return (Map<MinecraftProfileTexture.Type, MinecraftProfileTexture>)(result.getTextures() == null ? new HashMap() : result.getTextures());
+         if (result.getTextures() == null) {
+            return new HashMap();
+         } else {
+            for(Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
+               if (!isWhitelistedDomain(((MinecraftProfileTexture)entry.getValue()).getUrl())) {
+                  LOGGER.error("Textures payload has been tampered with (non-whitelisted domain)");
+                  return new HashMap();
+               }
+            }
+
+            return result.getTextures();
+         }
       }
    }
 
@@ -164,5 +179,25 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
    public YggdrasilAuthenticationService getAuthenticationService() {
       return (YggdrasilAuthenticationService)super.getAuthenticationService();
+   }
+
+   private static boolean isWhitelistedDomain(String url) {
+      URI uri = null;
+
+      try {
+         uri = new URI(url);
+      } catch (URISyntaxException var4) {
+         throw new IllegalArgumentException("Invalid URL '" + url + "'");
+      }
+
+      String domain = uri.getHost();
+
+      for(int i = 0; i < WHITELISTED_DOMAINS.length; ++i) {
+         if (domain.endsWith(WHITELISTED_DOMAINS[i])) {
+            return true;
+         }
+      }
+
+      return false;
    }
 }
