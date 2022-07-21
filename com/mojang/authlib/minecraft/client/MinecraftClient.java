@@ -100,7 +100,7 @@ public class MinecraftClient {
 
    private HttpURLConnection createUrlConnection(URL url) {
       try {
-         LOGGER.debug("Connecting to {}", new Object[]{url});
+         LOGGER.debug("Connecting to {}", url);
          HttpURLConnection connection = (HttpURLConnection)url.openConnection(this.proxy);
          connection.setConnectTimeout(5000);
          connection.setReadTimeout(5000);

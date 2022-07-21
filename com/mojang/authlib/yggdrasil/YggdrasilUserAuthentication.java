@@ -45,7 +45,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
       super(authenticationService);
       this.clientToken = clientToken;
       this.agent = agent;
-      LOGGER.info("Environment: " + env.getName(), new Object[]{". AuthHost: " + env.getAuthHost()});
+      LOGGER.info("Environment: " + env.getName(), ". AuthHost: " + env.getAuthHost());
       this.routeAuthenticate = HttpAuthenticationService.constantURL(env.getAuthHost() + "/authenticate");
       this.routeRefresh = HttpAuthenticationService.constantURL(env.getAuthHost() + "/refresh");
       this.routeValidate = HttpAuthenticationService.constantURL(env.getAuthHost() + "/validate");
