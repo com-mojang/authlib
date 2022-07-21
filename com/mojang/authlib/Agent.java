@@ -20,6 +20,6 @@ public class Agent {
    }
 
    public String toString() {
-      return "Agent{name='" + this.name + '\'' + ", version=" + this.version + '}';
+      return "Agent{name='" + this.name + "', version=" + this.version + "}";
    }
 }

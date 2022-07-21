@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
-import org.apache.commons.io.Charsets;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +41,7 @@ public class MinecraftClient {
       Validate.notNull(body);
       Validate.notNull(responseClass);
       String bodyAsJson = this.objectMapper.writeValueAsString(body);
-      byte[] postAsBytes = bodyAsJson.getBytes(Charsets.UTF_8);
+      byte[] postAsBytes = bodyAsJson.getBytes(StandardCharsets.UTF_8);
       HttpURLConnection connection = this.postInternal(url, postAsBytes);
       return this.readInputStream(url, responseClass, connection);
    }
@@ -55,7 +55,7 @@ public class MinecraftClient {
          if (status >= 400) {
             inputStream = connection.getErrorStream();
             if (inputStream != null) {
-               String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+               String result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                ErrorResponse errorResponse = this.objectMapper.readValue(result, ErrorResponse.class);
                throw new MinecraftClientHttpException(status, errorResponse);
             }
@@ -64,7 +64,7 @@ public class MinecraftClient {
          }
 
          inputStream = connection.getInputStream();
-         String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+         String result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
          errorResponse = this.objectMapper.readValue(result, clazz);
       } catch (IOException var11) {
          throw new MinecraftClientException(
@@ -83,7 +83,7 @@ public class MinecraftClient {
 
       try {
          connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-         connection.setRequestProperty("Content-Length", "" + postAsBytes.length);
+         connection.setRequestProperty("Content-Length", postAsBytes.length + "");
          connection.setRequestProperty("Authorization", "Bearer " + this.accessToken);
          connection.setRequestMethod("POST");
          connection.setDoOutput(true);

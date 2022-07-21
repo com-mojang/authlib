@@ -5,7 +5,8 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.exceptions.MinecraftClientHttpException;
-import com.mojang.authlib.minecraft.SocialInteractionsService;
+import com.mojang.authlib.minecraft.TelemetrySession;
+import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
 import com.mojang.authlib.yggdrasil.response.PrivilegesResponse;
@@ -14,14 +15,16 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
-public class YggdrasilSocialInteractionsService implements SocialInteractionsService {
+public class YggdrasilUserApiService implements UserApiService {
    private static final long BLOCKLIST_REQUEST_COOLDOWN_SECONDS = 120L;
    private static final UUID ZERO_UUID = new UUID(0L, 0L);
    private final URL routePrivileges;
    private final URL routeBlocklist;
    private final MinecraftClient minecraftClient;
+   private final Environment environment;
    private boolean serversAllowed;
    private boolean realmsAllowed;
    private boolean chatAllowed;
@@ -31,8 +34,9 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
    @Nullable
    private Set<UUID> blockList;
 
-   public YggdrasilSocialInteractionsService(String accessToken, Proxy proxy, Environment env) throws AuthenticationException {
+   public YggdrasilUserApiService(String accessToken, Proxy proxy, Environment env) throws AuthenticationException {
       this.minecraftClient = new MinecraftClient(accessToken, proxy);
+      this.environment = env;
       this.routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privileges");
       this.routeBlocklist = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privacy/blocklist");
       this.checkPrivileges();
@@ -56,6 +60,13 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
    @Override
    public boolean telemetryAllowed() {
       return this.telemetryAllowed;
+   }
+
+   @Override
+   public TelemetrySession newTelemetrySession(Executor executor) {
+      return (TelemetrySession)(!this.telemetryAllowed
+         ? TelemetrySession.DISABLED
+         : new YggdrassilTelemetrySession(this.minecraftClient, this.environment, executor));
    }
 
    @Override

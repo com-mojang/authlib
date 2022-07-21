@@ -24,7 +24,7 @@ public class EnvironmentParser {
 
    public static Optional<Environment> getEnvironmentFromProperties() {
       String envName = environmentOverride != null ? environmentOverride : System.getProperty("minecraft.api.env");
-      Optional<Environment> env = YggdrasilEnvironment.fromString(envName).map(Environment.class::cast);
+      Optional<Environment> env = YggdrasilEnvironment.fromString(envName);
       return env.isPresent() ? env : fromHostNames();
    }
 

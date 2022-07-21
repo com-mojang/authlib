@@ -22,6 +22,7 @@ import com.mojang.authlib.exceptions.InsufficientPrivilegesException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
 import com.mojang.authlib.yggdrasil.response.Response;
@@ -69,7 +70,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
    }
 
    private static Environment determineEnvironment() {
-      return (Environment)EnvironmentParser.getEnvironmentFromProperties().orElse(YggdrasilEnvironment.PROD);
+      return (Environment)EnvironmentParser.getEnvironmentFromProperties().orElse(YggdrasilEnvironment.PROD.getEnvironment());
    }
 
    @Override
@@ -121,14 +122,11 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
       }
    }
 
-   public YggdrasilSocialInteractionsService createSocialInteractionsService(String accessToken) throws AuthenticationException {
-      return new YggdrasilSocialInteractionsService(accessToken, this.getProxy(), this.environment);
+   public UserApiService createUserApiService(String accessToken) throws AuthenticationException {
+      return new YggdrasilUserApiService(accessToken, this.getProxy(), this.environment);
    }
 
    private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
-      private GameProfileSerializer() {
-      }
-
       public GameProfile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
          JsonObject object = (JsonObject)json;
          UUID id = object.has("id") ? (UUID)context.deserialize(object.get("id"), UUID.class) : null;

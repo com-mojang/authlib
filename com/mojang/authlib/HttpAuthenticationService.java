@@ -9,10 +9,10 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
@@ -46,9 +46,9 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
       Validate.notNull(post);
       Validate.notNull(contentType);
       HttpURLConnection connection = this.createUrlConnection(url);
-      byte[] postAsBytes = post.getBytes(Charsets.UTF_8);
+      byte[] postAsBytes = post.getBytes(StandardCharsets.UTF_8);
       connection.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
-      connection.setRequestProperty("Content-Length", "" + postAsBytes.length);
+      connection.setRequestProperty("Content-Length", postAsBytes.length + "");
       connection.setDoOutput(true);
       LOGGER.debug("Writing POST data to " + url + ": " + post);
       OutputStream outputStream = null;
@@ -66,7 +66,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
       String var10;
       try {
          inputStream = connection.getInputStream();
-         String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+         String result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + result);
          return result;
@@ -79,7 +79,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
          }
 
          LOGGER.debug("Reading error page from " + url);
-         String resultx = IOUtils.toString(inputStream, Charsets.UTF_8);
+         String resultx = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + resultx);
          var10 = resultx;
@@ -107,7 +107,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
       String var7;
       try {
          inputStream = connection.getInputStream();
-         String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+         String result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + result);
          return result;
@@ -120,7 +120,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
          }
 
          LOGGER.debug("Reading error page from " + url);
-         String resultx = IOUtils.toString(inputStream, Charsets.UTF_8);
+         String resultx = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + resultx);
          var7 = resultx;

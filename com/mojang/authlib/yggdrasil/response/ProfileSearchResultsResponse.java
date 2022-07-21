@@ -18,8 +18,7 @@ public class ProfileSearchResultsResponse extends Response {
    public static class Serializer implements JsonDeserializer<ProfileSearchResultsResponse> {
       public ProfileSearchResultsResponse deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
          ProfileSearchResultsResponse result = new ProfileSearchResultsResponse();
-         if (json instanceof JsonObject) {
-            JsonObject object = (JsonObject)json;
+         if (json instanceof JsonObject object) {
             if (object.has("error")) {
                result.setError(object.getAsJsonPrimitive("error").getAsString());
             }

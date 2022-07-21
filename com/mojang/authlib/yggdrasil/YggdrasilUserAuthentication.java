@@ -38,7 +38,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
    private boolean isOnline;
 
    public YggdrasilUserAuthentication(YggdrasilAuthenticationService authenticationService, String clientToken, Agent agent) {
-      this(authenticationService, clientToken, agent, YggdrasilEnvironment.PROD);
+      this(authenticationService, clientToken, agent, YggdrasilEnvironment.PROD.getEnvironment());
    }
 
    public YggdrasilUserAuthentication(YggdrasilAuthenticationService authenticationService, String clientToken, Agent agent, Environment env) {
@@ -264,8 +264,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          + this.getSelectedProfile()
          + ", username='"
          + this.getUsername()
-         + '\''
-         + ", isLoggedIn="
+         + "', isLoggedIn="
          + this.isLoggedIn()
          + ", userType="
          + this.getUserType()
@@ -273,11 +272,9 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          + this.canPlayOnline()
          + ", accessToken='"
          + this.accessToken
-         + '\''
-         + ", clientToken='"
+         + "', clientToken='"
          + this.clientToken
-         + '\''
-         + '}';
+         + "'}";
    }
 
    public YggdrasilAuthenticationService getAuthenticationService() {

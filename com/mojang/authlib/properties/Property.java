@@ -5,7 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 public class Property {
    private final String name;
@@ -43,7 +43,7 @@ public class Property {
          Signature signature = Signature.getInstance("SHA1withRSA");
          signature.initVerify(publicKey);
          signature.update(this.value.getBytes());
-         return signature.verify(Base64.decodeBase64(this.signature));
+         return signature.verify(Base64.getDecoder().decode(this.signature));
       } catch (NoSuchAlgorithmException var3) {
          var3.printStackTrace();
       } catch (InvalidKeyException var4) {

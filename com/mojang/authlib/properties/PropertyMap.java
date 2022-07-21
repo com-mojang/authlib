@@ -24,20 +24,17 @@ public class PropertyMap extends ForwardingMultimap<String, Property> {
    public static class Serializer implements JsonSerializer<PropertyMap>, JsonDeserializer<PropertyMap> {
       public PropertyMap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
          PropertyMap result = new PropertyMap();
-         if (json instanceof JsonObject) {
-            JsonObject object = (JsonObject)json;
-
+         if (json instanceof JsonObject object) {
             for(Entry<String, JsonElement> entry : object.entrySet()) {
                if (entry.getValue() instanceof JsonArray) {
                   for(JsonElement element : (JsonArray)entry.getValue()) {
-                     result.put(entry.getKey(), new Property((String)entry.getKey(), element.getAsString()));
+                     result.put((String)entry.getKey(), new Property((String)entry.getKey(), element.getAsString()));
                   }
                }
             }
          } else if (json instanceof JsonArray) {
             for(JsonElement element : (JsonArray)json) {
-               if (element instanceof JsonObject) {
-                  JsonObject object = (JsonObject)element;
+               if (element instanceof JsonObject object) {
                   String name = object.getAsJsonPrimitive("name").getAsString();
                   String value = object.getAsJsonPrimitive("value").getAsString();
                   if (object.has("signature")) {
