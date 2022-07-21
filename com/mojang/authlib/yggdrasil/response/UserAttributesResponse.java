@@ -40,6 +40,8 @@ public class UserAttributesResponse extends Response {
          @Nullable
          private Instant expires;
          private String reason;
+         @Nullable
+         private String reasonMessage;
 
          public UUID getBanId() {
             return this.banId;
@@ -52,6 +54,11 @@ public class UserAttributesResponse extends Response {
 
          public String getReason() {
             return this.reason;
+         }
+
+         @Nullable
+         public String getReasonMessage() {
+            return this.reasonMessage;
          }
       }
    }
