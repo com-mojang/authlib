@@ -6,4 +6,6 @@ public interface AuthenticationService {
    UserAuthentication createUserAuthentication(Agent var1);
 
    MinecraftSessionService createMinecraftSessionService();
+
+   GameProfileRepository createProfileRepository();
 }

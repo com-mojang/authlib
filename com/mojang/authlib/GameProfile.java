@@ -40,19 +40,31 @@ public class GameProfile {
          return true;
       } else if (o != null && this.getClass() == o.getClass()) {
          GameProfile that = (GameProfile)o;
-         if (!this.id.equals(that.id)) {
+         if (this.id != null) {
+            if (!this.id.equals(that.id)) {
+               return false;
+            }
+         } else if (that.id != null) {
             return false;
-         } else {
-            return this.name.equals(that.name);
          }
+
+         if (this.name != null) {
+            if (!this.name.equals(that.name)) {
+               return false;
+            }
+         } else if (that.name != null) {
+            return false;
+         }
+
+         return true;
       } else {
          return false;
       }
    }
 
    public int hashCode() {
-      int result = this.id.hashCode();
-      return 31 * result + this.name.hashCode();
+      int result = this.id != null ? this.id.hashCode() : 0;
+      return 31 * result + (this.name != null ? this.name.hashCode() : 0);
    }
 
    public String toString() {
