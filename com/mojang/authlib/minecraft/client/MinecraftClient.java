@@ -12,11 +12,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MinecraftClient {
-   private static final Logger LOGGER = LogManager.getLogger();
+   private static final Logger LOGGER = LoggerFactory.getLogger(MinecraftClient.class);
    public static final int CONNECT_TIMEOUT_MS = 5000;
    public static final int READ_TIMEOUT_MS = 5000;
    private final String accessToken;

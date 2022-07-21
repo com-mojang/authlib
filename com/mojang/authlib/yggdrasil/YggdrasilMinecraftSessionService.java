@@ -37,13 +37,13 @@ import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
    private static final String[] ALLOWED_DOMAINS = new String[]{".minecraft.net", ".mojang.com"};
    private static final String[] BLOCKED_DOMAINS = new String[]{"bugs.mojang.com", "education.minecraft.net", "feedback.minecraft.net"};
-   private static final Logger LOGGER = LogManager.getLogger();
+   private static final Logger LOGGER = LoggerFactory.getLogger(YggdrasilMinecraftSessionService.class);
    private final String baseUrl;
    private final URL joinUrl;
    private final URL checkUrl;

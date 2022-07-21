@@ -34,11 +34,11 @@ import java.net.URL;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
-   private static final Logger LOGGER = LogManager.getLogger();
+   private static final Logger LOGGER = LoggerFactory.getLogger(YggdrasilAuthenticationService.class);
    @Nullable
    private final String clientToken;
    private final Gson gson;

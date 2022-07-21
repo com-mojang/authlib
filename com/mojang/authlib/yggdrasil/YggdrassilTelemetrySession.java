@@ -17,11 +17,11 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class YggdrassilTelemetrySession implements TelemetrySession {
-   private static final Logger LOGGER = LogManager.getLogger();
+   private static final Logger LOGGER = LoggerFactory.getLogger(YggdrassilTelemetrySession.class);
    private static final String SOURCE = "minecraft.java";
    private final MinecraftClient minecraftClient;
    private final URL routeEvents;
