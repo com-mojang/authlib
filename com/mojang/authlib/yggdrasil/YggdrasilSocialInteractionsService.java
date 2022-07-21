@@ -8,11 +8,14 @@ import com.mojang.authlib.minecraft.SocialInteractionsService;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
 import com.mojang.authlib.yggdrasil.response.PrivilegesResponse;
 import java.net.URL;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 public class YggdrasilSocialInteractionsService implements SocialInteractionsService {
+   private static final long BLOCKLIST_REQUEST_COOLDOWN_SECONDS = 120L;
+   private static final UUID ZERO_UUID = new UUID(0L, 0L);
    private final URL routePrivileges;
    private final URL routeBlocklist;
    private final YggdrasilAuthenticationService authenticationService;
@@ -20,6 +23,8 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
    private boolean serversAllowed;
    private boolean realmsAllowed;
    private boolean chatAllowed;
+   @Nullable
+   private Instant nextAcceptableBlockRequest;
    @Nullable
    private Set<UUID> blockList;
 
@@ -48,23 +53,34 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
 
    @Override
    public boolean isBlockedPlayer(UUID playerID) {
-      if (this.blockList == null) {
-         this.blockList = this.fetchBlockList();
+      if (playerID.equals(ZERO_UUID)) {
+         return false;
+      } else {
          if (this.blockList == null) {
-            return false;
+            this.blockList = this.fetchBlockList();
+            if (this.blockList == null) {
+               return false;
+            }
          }
-      }
 
-      return this.blockList.contains(playerID);
+         return this.blockList.contains(playerID);
+      }
    }
 
    @Nullable
    private Set<UUID> fetchBlockList() {
-      try {
-         BlockListResponse response = this.authenticationService.makeRequest(this.routeBlocklist, null, BlockListResponse.class, "Bearer " + this.accessToken);
-         return response == null ? null : response.getBlockedProfiles();
-      } catch (AuthenticationException var2) {
+      if (this.nextAcceptableBlockRequest != null && this.nextAcceptableBlockRequest.isAfter(Instant.now())) {
          return null;
+      } else {
+         this.nextAcceptableBlockRequest = Instant.now().plusSeconds(120L);
+
+         try {
+            BlockListResponse response = this.authenticationService
+               .makeRequest(this.routeBlocklist, null, BlockListResponse.class, "Bearer " + this.accessToken);
+            return response == null ? null : response.getBlockedProfiles();
+         } catch (AuthenticationException var2) {
+            return null;
+         }
       }
    }
 
