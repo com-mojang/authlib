@@ -6,6 +6,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class MinecraftProfileTexture {
+   public static final int PROFILE_TEXTURE_COUNT = MinecraftProfileTexture.Type.values().length;
    private final String url;
    private final Map<String, String> metadata;
 
@@ -33,6 +34,7 @@ public class MinecraftProfileTexture {
 
    public static enum Type {
       SKIN,
-      CAPE;
+      CAPE,
+      ELYTRA;
    }
 }
