@@ -41,7 +41,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
-   private static final String[] WHITELISTED_DOMAINS = new String[]{".minecraft.net", ".mojang.com"};
+   private static final String[] ALLOWED_DOMAINS = new String[]{".minecraft.net", ".mojang.com"};
+   private static final String[] BLOCKED_DOMAINS = new String[]{"education.minecraft.net", "bugs.mojang.com"};
    private static final Logger LOGGER = LogManager.getLogger();
    private final String baseUrl;
    private final URL joinUrl;
@@ -134,15 +135,16 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          try {
             String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
             result = (MinecraftTexturesPayload)this.gson.fromJson(json, MinecraftTexturesPayload.class);
-         } catch (JsonParseException var7) {
-            LOGGER.error("Could not decode textures payload", var7);
+         } catch (JsonParseException var8) {
+            LOGGER.error("Could not decode textures payload", var8);
             return new HashMap();
          }
 
          if (result != null && result.getTextures() != null) {
             for(Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
-               if (!isWhitelistedDomain(((MinecraftProfileTexture)entry.getValue()).getUrl())) {
-                  LOGGER.error("Textures payload has been tampered with (non-whitelisted domain)");
+               String url = ((MinecraftProfileTexture)entry.getValue()).getUrl();
+               if (!isAllowedTextureDomain(url)) {
+                  LOGGER.error("Textures payload contains blocked domain: {}", url);
                   return new HashMap();
                }
             }
@@ -188,19 +190,21 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
       return (YggdrasilAuthenticationService)super.getAuthenticationService();
    }
 
-   private static boolean isWhitelistedDomain(String url) {
-      URI uri = null;
-
+   private static boolean isAllowedTextureDomain(String url) {
+      URI uri;
       try {
          uri = new URI(url);
-      } catch (URISyntaxException var4) {
+      } catch (URISyntaxException var3) {
          throw new IllegalArgumentException("Invalid URL '" + url + "'");
       }
 
       String domain = uri.getHost();
+      return isDomainOnList(domain, ALLOWED_DOMAINS) && !isDomainOnList(domain, BLOCKED_DOMAINS);
+   }
 
-      for(int i = 0; i < WHITELISTED_DOMAINS.length; ++i) {
-         if (domain.endsWith(WHITELISTED_DOMAINS[i])) {
+   private static boolean isDomainOnList(String domain, String[] list) {
+      for(String entry : list) {
+         if (domain.endsWith(entry)) {
             return true;
          }
       }
