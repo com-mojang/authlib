@@ -20,6 +20,7 @@ import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
       builder.registerTypeAdapter(GameProfile.class, new YggdrasilAuthenticationService.GameProfileSerializer());
       builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
       builder.registerTypeAdapter(UUID.class, new UUIDTypeAdapter());
+      builder.registerTypeAdapter(ProfileSearchResultsResponse.class, new ProfileSearchResultsResponse.Serializer());
       this.gson = builder.create();
    }
 

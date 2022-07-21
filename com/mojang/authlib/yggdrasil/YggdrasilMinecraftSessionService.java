@@ -22,8 +22,6 @@ import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -93,66 +91,31 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
    @Override
    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) {
       Property textureProperty = (Property)Iterables.getFirst(profile.getProperties().get("textures"), null);
-      if (requireSecure) {
-         if (textureProperty == null) {
-            if (profile.getId().version() != 4) {
-               return new HashMap();
-            }
-
-            throw new InsecureTextureException.MissingTextureException();
-         }
-
-         if (!textureProperty.hasSignature()) {
-            LOGGER.error("Signature is missing from textures payload");
-            throw new InsecureTextureException("Signature is missing from textures payload");
-         }
-
-         if (!textureProperty.isSignatureValid(this.publicKey)) {
-            LOGGER.error("Textures payload has been tampered with (signature invalid)");
-            throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
-         }
-      } else if (textureProperty == null) {
+      if (textureProperty == null) {
          return new HashMap();
-      }
-
-      MinecraftTexturesPayload result;
-      try {
-         String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
-         result = (MinecraftTexturesPayload)this.gson.fromJson(json, MinecraftTexturesPayload.class);
-      } catch (JsonParseException var7) {
-         LOGGER.error("Could not decode textures payload", var7);
-         return new HashMap();
-      }
-
-      if (result.getProfileId() == null || !result.getProfileId().equals(profile.getId())) {
-         LOGGER.error("Decrypted textures payload was for another user (expected id {} but was for {})", new Object[]{profile.getId(), result.getProfileId()});
-         throw new InsecureTextureException.WrongTextureOwnerException(profile, result.getProfileId(), result.getProfileName());
-      } else if (result.getProfileName() != null && result.getProfileName().equals(profile.getName())) {
+      } else {
          if (requireSecure) {
-            if (result.isPublic()) {
-               LOGGER.error("Decrypted textures payload was public but we require secure data");
-               throw new InsecureTextureException("Decrypted textures payload was public but we require secure data");
+            if (!textureProperty.hasSignature()) {
+               LOGGER.error("Signature is missing from textures payload");
+               throw new InsecureTextureException("Signature is missing from textures payload");
             }
 
-            Calendar limit = Calendar.getInstance();
-            limit.add(5, -1);
-            Date validFrom = new Date(result.getTimestamp());
-            if (validFrom.before(limit.getTime())) {
-               LOGGER.error("Decrypted textures payload is too old ({}, but we need it to be at least {})", new Object[]{validFrom, limit});
-               throw new InsecureTextureException.OutdatedTextureException(validFrom, limit);
+            if (!textureProperty.isSignatureValid(this.publicKey)) {
+               LOGGER.error("Textures payload has been tampered with (signature invalid)");
+               throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
             }
+         }
 
-            if (result.getTextures() == null) {
-               throw new InsecureTextureException.MissingTextureException();
-            }
+         MinecraftTexturesPayload result;
+         try {
+            String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
+            result = (MinecraftTexturesPayload)this.gson.fromJson(json, MinecraftTexturesPayload.class);
+         } catch (JsonParseException var6) {
+            LOGGER.error("Could not decode textures payload", var6);
+            return new HashMap();
          }
 
          return (Map<MinecraftProfileTexture.Type, MinecraftProfileTexture>)(result.getTextures() == null ? new HashMap() : result.getTextures());
-      } else {
-         LOGGER.error(
-            "Decrypted textures payload was for another user (expected name {} but was for {})", new Object[]{profile.getName(), result.getProfileName()}
-         );
-         throw new InsecureTextureException.WrongTextureOwnerException(profile, result.getProfileId(), result.getProfileName());
       }
    }
 
