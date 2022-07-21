@@ -1,5 +1,8 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,6 +28,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -38,6 +42,13 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
    private static final URL CHECK_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/hasJoined");
    private final PublicKey publicKey;
    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+   private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder.newBuilder()
+      .expireAfterWrite(6L, TimeUnit.HOURS)
+      .build(new CacheLoader<GameProfile, GameProfile>() {
+         public GameProfile load(GameProfile key) throws Exception {
+            return YggdrasilMinecraftSessionService.this.fillGameProfile(key, false);
+         }
+      });
 
    protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
       super(authenticationService);
@@ -124,26 +135,30 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
       if (profile.getId() == null) {
          return profile;
       } else {
-         try {
-            URL url = HttpAuthenticationService.constantURL(
-               "https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(profile.getId())
-            );
-            url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
-            MinecraftProfilePropertiesResponse response = this.getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
-            if (response == null) {
-               LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
-               return profile;
-            } else {
-               GameProfile result = new GameProfile(response.getId(), response.getName());
-               result.getProperties().putAll(response.getProperties());
-               profile.getProperties().putAll(response.getProperties());
-               LOGGER.debug("Successfully fetched profile properties for " + profile);
-               return result;
-            }
-         } catch (AuthenticationException var6) {
-            LOGGER.warn("Couldn't look up profile properties for " + profile, var6);
+         return !requireSecure ? (GameProfile)this.insecureProfiles.getUnchecked(profile) : this.fillGameProfile(profile, true);
+      }
+   }
+
+   protected GameProfile fillGameProfile(GameProfile profile, boolean requireSecure) {
+      try {
+         URL url = HttpAuthenticationService.constantURL(
+            "https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(profile.getId())
+         );
+         url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
+         MinecraftProfilePropertiesResponse response = this.getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
+         if (response == null) {
+            LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
             return profile;
+         } else {
+            GameProfile result = new GameProfile(response.getId(), response.getName());
+            result.getProperties().putAll(response.getProperties());
+            profile.getProperties().putAll(response.getProperties());
+            LOGGER.debug("Successfully fetched profile properties for " + profile);
+            return result;
          }
+      } catch (AuthenticationException var6) {
+         LOGGER.warn("Couldn't look up profile properties for " + profile, var6);
+         return profile;
       }
    }
 
