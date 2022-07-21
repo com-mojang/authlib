@@ -165,8 +165,8 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
    public static URL concatenateURL(URL url, String query) {
       try {
          return url.getQuery() != null && url.getQuery().length() > 0
-            ? new URL(url.getProtocol(), url.getHost(), url.getFile() + "&" + query)
-            : new URL(url.getProtocol(), url.getHost(), url.getFile() + "?" + query);
+            ? new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "&" + query)
+            : new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?" + query);
       } catch (MalformedURLException var3) {
          throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", var3);
       }

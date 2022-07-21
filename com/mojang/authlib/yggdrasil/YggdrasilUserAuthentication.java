@@ -4,6 +4,7 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.HttpUserAuthentication;
+import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.yggdrasil.request.AuthenticationRequest;
@@ -77,8 +78,15 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
          } else {
-            if (response.getUser() != null && response.getUser().getId() != null) {
-               this.setUserid(response.getUser().getId());
+            if (response.getSelectedProfile() != null) {
+               this.setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+            } else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+               this.setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+            }
+
+            User user = response.getUser();
+            if (user != null && user.getId() != null) {
+               this.setUserid(user.getId());
             } else {
                this.setUserid(this.getUsername());
             }
@@ -88,19 +96,25 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             this.profiles = response.getAvailableProfiles();
             this.setSelectedProfile(response.getSelectedProfile());
             this.getModifiableUserProperties().clear();
-            if (response.getUser() != null && response.getUser().getProperties() != null) {
-               for(User.Property property : response.getUser().getProperties()) {
-                  Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
-                  if (values == null) {
-                     values = new ArrayList();
-                     this.getModifiableUserProperties().put(property.getKey(), values);
-                  }
-
-                  values.add(property.getValue());
-               }
-            }
-
+            this.updateUserProperties(user);
          }
+      }
+   }
+
+   protected void updateUserProperties(User user) {
+      if (user != null) {
+         if (user.getProperties() != null) {
+            for(User.Property property : user.getProperties()) {
+               Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
+               if (values == null) {
+                  values = new ArrayList();
+                  this.getModifiableUserProperties().put(property.getKey(), values);
+               }
+
+               values.add(property.getValue());
+            }
+         }
+
       }
    }
 
@@ -122,6 +136,12 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
          } else {
+            if (response.getSelectedProfile() != null) {
+               this.setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+            } else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+               this.setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+            }
+
             if (response.getUser() != null && response.getUser().getId() != null) {
                this.setUserid(response.getUser().getId());
             } else {
@@ -133,18 +153,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             this.profiles = response.getAvailableProfiles();
             this.setSelectedProfile(response.getSelectedProfile());
             this.getModifiableUserProperties().clear();
-            if (response.getUser() != null && response.getUser().getProperties() != null) {
-               for(User.Property property : response.getUser().getProperties()) {
-                  Collection<String> values = (Collection)this.getModifiableUserProperties().get(property.getKey());
-                  if (values == null) {
-                     values = new ArrayList();
-                     this.getModifiableUserProperties().put(property.getKey(), values);
-                  }
-
-                  values.add(property.getValue());
-               }
-            }
-
+            this.updateUserProperties(response.getUser());
          }
       }
    }
@@ -238,6 +247,8 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          + '\''
          + ", isLoggedIn="
          + this.isLoggedIn()
+         + ", userType="
+         + this.getUserType()
          + ", canPlayOnline="
          + this.canPlayOnline()
          + ", accessToken='"

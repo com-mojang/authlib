@@ -18,6 +18,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
    private String username;
    private String password;
    private GameProfile selectedProfile;
+   private UserType userType;
 
    protected BaseUserAuthentication(AuthenticationService authenticationService) {
       Validate.notNull(authenticationService);
@@ -35,6 +36,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
       this.userid = null;
       this.setSelectedProfile(null);
       this.getModifiableUserProperties().clear();
+      this.setUserType(null);
    }
 
    @Override
@@ -155,6 +157,19 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
 
    protected Map<String, Collection<String>> getModifiableUserProperties() {
       return this.userProperties;
+   }
+
+   @Override
+   public UserType getUserType() {
+      if (this.isLoggedIn()) {
+         return this.userType == null ? UserType.LEGACY : this.userType;
+      } else {
+         return null;
+      }
+   }
+
+   protected void setUserType(UserType userType) {
+      this.userType = userType;
    }
 
    protected void setUserid(String userid) {

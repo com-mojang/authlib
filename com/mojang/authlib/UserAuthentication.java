@@ -34,4 +34,6 @@ public interface UserAuthentication {
    String getUserID();
 
    Map<String, Collection<String>> getUserProperties();
+
+   UserType getUserType();
 }

@@ -1,10 +1,14 @@
 package com.mojang.authlib;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 public class GameProfile {
    private final String id;
    private final String name;
+   private final Map<String, ProfileProperty> properties = new HashMap();
+   private boolean legacy;
 
    public GameProfile(String id, String name) {
       if (StringUtils.isBlank(id) && StringUtils.isBlank(name)) {
@@ -21,6 +25,10 @@ public class GameProfile {
 
    public String getName() {
       return this.name;
+   }
+
+   public Map<String, ProfileProperty> getProperties() {
+      return this.properties;
    }
 
    public boolean isComplete() {
@@ -49,5 +57,9 @@ public class GameProfile {
 
    public String toString() {
       return "GameProfile{id='" + this.id + '\'' + ", name='" + this.name + '\'' + '}';
+   }
+
+   public boolean isLegacy() {
+      return this.legacy;
    }
 }
