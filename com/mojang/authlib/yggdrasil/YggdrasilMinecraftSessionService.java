@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.mojang.authlib.Environment;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
@@ -42,9 +43,9 @@ import org.apache.logging.log4j.Logger;
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
    private static final String[] WHITELISTED_DOMAINS = new String[]{".minecraft.net", ".mojang.com"};
    private static final Logger LOGGER = LogManager.getLogger();
-   private static final String BASE_URL = "https://sessionserver.mojang.com/session/minecraft/";
-   private static final URL JOIN_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/join");
-   private static final URL CHECK_URL = HttpAuthenticationService.constantURL("https://sessionserver.mojang.com/session/minecraft/hasJoined");
+   private final String baseUrl;
+   private final URL joinUrl;
+   private final URL checkUrl;
    private final PublicKey publicKey;
    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
    private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder.newBuilder()
@@ -55,8 +56,11 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          }
       });
 
-   protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
-      super(authenticationService);
+   protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService service, Environment env) {
+      super(service);
+      this.baseUrl = env.getSessionHost() + "/session/minecraft/";
+      this.joinUrl = HttpAuthenticationService.constantURL(this.baseUrl + "join");
+      this.checkUrl = HttpAuthenticationService.constantURL(this.baseUrl + "hasJoined");
 
       try {
          X509EncodedKeySpec spec = new X509EncodedKeySpec(
@@ -64,7 +68,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          );
          KeyFactory keyFactory = KeyFactory.getInstance("RSA");
          this.publicKey = keyFactory.generatePublic(spec);
-      } catch (Exception var4) {
+      } catch (Exception var5) {
          throw new Error("Missing/invalid yggdrasil public key!");
       }
    }
@@ -75,7 +79,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
       request.accessToken = authenticationToken;
       request.selectedProfile = profile.getId();
       request.serverId = serverId;
-      this.getAuthenticationService().makeRequest(JOIN_URL, request, Response.class);
+      this.getAuthenticationService().makeRequest(this.joinUrl, request, Response.class);
    }
 
    @Override
@@ -87,7 +91,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
          arguments.put("ip", address.getHostAddress());
       }
 
-      URL url = HttpAuthenticationService.concatenateURL(CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
+      URL url = HttpAuthenticationService.concatenateURL(this.checkUrl, HttpAuthenticationService.buildQuery(arguments));
 
       try {
          HasJoinedMinecraftServerResponse response = this.getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class);
@@ -161,9 +165,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
    protected GameProfile fillGameProfile(GameProfile profile, boolean requireSecure) {
       try {
-         URL url = HttpAuthenticationService.constantURL(
-            "https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(profile.getId())
-         );
+         URL url = HttpAuthenticationService.constantURL(this.baseUrl + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
          url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
          MinecraftProfilePropertiesResponse response = this.getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
          if (response == null) {

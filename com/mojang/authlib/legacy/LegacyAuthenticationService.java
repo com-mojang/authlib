@@ -6,6 +6,7 @@ import com.mojang.authlib.HttpAuthenticationService;
 import java.net.Proxy;
 import org.apache.commons.lang3.Validate;
 
+@Deprecated
 public class LegacyAuthenticationService extends HttpAuthenticationService {
    protected LegacyAuthenticationService(Proxy proxy) {
       super(proxy);

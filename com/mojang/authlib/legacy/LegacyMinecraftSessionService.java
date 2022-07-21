@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
    private static final String BASE_URL = "http://session.minecraft.net/game/";
    private static final URL JOIN_URL = HttpAuthenticationService.constantURL("http://session.minecraft.net/game/joinserver.jsp");

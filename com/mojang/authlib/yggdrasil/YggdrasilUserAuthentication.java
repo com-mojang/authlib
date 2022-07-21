@@ -1,6 +1,7 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.Environment;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.HttpUserAuthentication;
@@ -24,12 +25,11 @@ import org.apache.logging.log4j.Logger;
 
 public class YggdrasilUserAuthentication extends HttpUserAuthentication {
    private static final Logger LOGGER = LogManager.getLogger();
-   private static final String BASE_URL = "https://authserver.mojang.com/";
-   private static final URL ROUTE_AUTHENTICATE = HttpAuthenticationService.constantURL("https://authserver.mojang.com/authenticate");
-   private static final URL ROUTE_REFRESH = HttpAuthenticationService.constantURL("https://authserver.mojang.com/refresh");
-   private static final URL ROUTE_VALIDATE = HttpAuthenticationService.constantURL("https://authserver.mojang.com/validate");
-   private static final URL ROUTE_INVALIDATE = HttpAuthenticationService.constantURL("https://authserver.mojang.com/invalidate");
-   private static final URL ROUTE_SIGNOUT = HttpAuthenticationService.constantURL("https://authserver.mojang.com/signout");
+   private final URL routeAuthenticate;
+   private final URL routeRefresh;
+   private final URL routeValidate;
+   private final URL routeInvalidate;
+   private final URL routeSignout;
    private static final String STORAGE_KEY_ACCESS_TOKEN = "accessToken";
    private final Agent agent;
    private GameProfile[] profiles;
@@ -37,8 +37,18 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
    private boolean isOnline;
 
    public YggdrasilUserAuthentication(YggdrasilAuthenticationService authenticationService, Agent agent) {
+      this(authenticationService, agent, YggdrasilEnvironment.PROD);
+   }
+
+   public YggdrasilUserAuthentication(YggdrasilAuthenticationService authenticationService, Agent agent, Environment env) {
       super(authenticationService);
       this.agent = agent;
+      LOGGER.info("Environment: " + env.getName(), new Object[]{". AuthHost: " + env.getAuthHost()});
+      this.routeAuthenticate = HttpAuthenticationService.constantURL(env.getAuthHost() + "/authenticate");
+      this.routeRefresh = HttpAuthenticationService.constantURL(env.getAuthHost() + "/refresh");
+      this.routeValidate = HttpAuthenticationService.constantURL(env.getAuthHost() + "/validate");
+      this.routeInvalidate = HttpAuthenticationService.constantURL(env.getAuthHost() + "/invalidate");
+      this.routeSignout = HttpAuthenticationService.constantURL(env.getAuthHost() + "/signout");
    }
 
    @Override
@@ -74,7 +84,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
       } else {
          LOGGER.info("Logging in with username & password");
          AuthenticationRequest request = new AuthenticationRequest(this, this.getUsername(), this.getPassword());
-         AuthenticationResponse response = this.getAuthenticationService().makeRequest(ROUTE_AUTHENTICATE, request, AuthenticationResponse.class);
+         AuthenticationResponse response = this.getAuthenticationService().makeRequest(this.routeAuthenticate, request, AuthenticationResponse.class);
          if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
          } else {
@@ -128,7 +138,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             this.isOnline = true;
          } else {
             RefreshRequest request = new RefreshRequest(this);
-            RefreshResponse response = this.getAuthenticationService().makeRequest(ROUTE_REFRESH, request, RefreshResponse.class);
+            RefreshResponse response = this.getAuthenticationService().makeRequest(this.routeRefresh, request, RefreshResponse.class);
             if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
                throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
             } else {
@@ -159,7 +169,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
       ValidateRequest request = new ValidateRequest(this);
 
       try {
-         this.getAuthenticationService().makeRequest(ROUTE_VALIDATE, request, Response.class);
+         this.getAuthenticationService().makeRequest(this.routeValidate, request, Response.class);
          return true;
       } catch (AuthenticationException var3) {
          return false;
@@ -197,7 +207,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
          throw new AuthenticationException("Cannot change game profile. You must log out and back in.");
       } else if (profile != null && ArrayUtils.contains(this.profiles, profile)) {
          RefreshRequest request = new RefreshRequest(this, profile);
-         RefreshResponse response = this.getAuthenticationService().makeRequest(ROUTE_REFRESH, request, RefreshResponse.class);
+         RefreshResponse response = this.getAuthenticationService().makeRequest(this.routeRefresh, request, RefreshResponse.class);
          if (!response.getClientToken().equals(this.getAuthenticationService().getClientToken())) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
          } else {
