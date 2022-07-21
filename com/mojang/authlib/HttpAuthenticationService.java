@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.annotation.Nullable;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
@@ -90,36 +91,44 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
    }
 
    public String performGetRequest(URL url) throws IOException {
+      return this.performGetRequest(url, null);
+   }
+
+   public String performGetRequest(URL url, @Nullable String authentication) throws IOException {
       Validate.notNull(url);
       HttpURLConnection connection = this.createUrlConnection(url);
+      if (authentication != null) {
+         connection.setRequestProperty("Authorization", authentication);
+      }
+
       LOGGER.debug("Reading data from " + url);
       InputStream inputStream = null;
 
-      String var6;
+      String var7;
       try {
          inputStream = connection.getInputStream();
          String result = IOUtils.toString(inputStream, Charsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + result);
          return result;
-      } catch (IOException var10) {
+      } catch (IOException var11) {
          IOUtils.closeQuietly(inputStream);
          inputStream = connection.getErrorStream();
          if (inputStream == null) {
-            LOGGER.debug("Request failed", var10);
-            throw var10;
+            LOGGER.debug("Request failed", var11);
+            throw var11;
          }
 
          LOGGER.debug("Reading error page from " + url);
          String resultx = IOUtils.toString(inputStream, Charsets.UTF_8);
          LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
          LOGGER.debug("Response: " + resultx);
-         var6 = resultx;
+         var7 = resultx;
       } finally {
          IOUtils.closeQuietly(inputStream);
       }
 
-      return var6;
+      return var7;
    }
 
    public static URL constantURL(String url) {
