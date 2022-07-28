@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class GameProfile {
+   private static final String EMPTY_PLAYER_NAME = " ";
    private final UUID id;
    private final String name;
    private final PropertyMap properties = new PropertyMap();
@@ -16,7 +17,7 @@ public class GameProfile {
          throw new IllegalArgumentException("Name and ID cannot both be blank");
       } else {
          this.id = id;
-         this.name = name;
+         this.name = name != null && name.isEmpty() ? " " : name;
       }
    }
 
@@ -33,7 +34,11 @@ public class GameProfile {
    }
 
    public boolean isComplete() {
-      return this.id != null && StringUtils.isNotBlank(this.getName());
+      if (this.id != null && " ".equals(this.name) && this.properties.containsKey("textures")) {
+         return true;
+      } else {
+         return this.id != null && StringUtils.isNotBlank(this.getName());
+      }
    }
 
    public boolean equals(Object o) {
